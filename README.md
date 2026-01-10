@@ -1,2 +1,1 @@
-# fluxus
-a cfd library
+Implementation of a Finite Volume Element engine for CFD simulations

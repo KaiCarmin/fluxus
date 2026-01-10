@@ -1,0 +1,33 @@
+name: Fluxus CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out your code
+    - uses: actions/checkout@v3
+
+    # 2. Set up Python
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    # 3. Install Build Tools
+    - name: Install CMake & Ninja
+      run: pip install cmake ninja
+
+    # 4. Install Your Package (Compiles C++)
+    - name: Install Fluxus
+      run: pip install .[test]  # Install package + test dependencies
+
+    # 5. Run Tests
+    - name: Run Pytest
+      run: pytest tests/
