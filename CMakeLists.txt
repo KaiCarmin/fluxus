@@ -13,6 +13,9 @@ file(GLOB_RECURSE BINDINGS "src/core/bindings.cpp")
 # output name must match what you import in Python (e.g., _core)
 python_add_library(_core MODULE ${SOURCES} ${BINDINGS})
 
+# Link Pybind11 headers so the compiler can find "pybind11.h"
+target_link_libraries(_core PRIVATE pybind11::headers)
+
 # 4. Include Directories (Where to look for .hpp files)
 target_include_directories(_core PRIVATE "src/core/include")
 
