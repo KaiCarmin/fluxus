@@ -13,6 +13,11 @@ file(GLOB_RECURSE BINDINGS "src/core/bindings.cpp")
 # output name must match what you import in Python (e.g., _core)
 python_add_library(_core MODULE ${SOURCES} ${BINDINGS})
 
+# This tells CMake: "Put the compiled .pyd file inside src/fluxus/"
+set_target_properties(_core PROPERTIES 
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/src/fluxus"
+)
+
 # Link Pybind11 headers so the compiler can find "pybind11.h"
 target_link_libraries(_core PRIVATE pybind11::headers)
 

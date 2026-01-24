@@ -23,5 +23,6 @@ dev = ["black", "isort", "mypy"]
 # Tells scikit-build-core to look for CMakeLists.txt in the root
 [tool.scikit-build]
 cmake.version = ">=3.15"
+
 # Installs the compile extension into the python package folder
 wheel.packages = ["src/fluxus"]
