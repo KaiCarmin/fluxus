@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h> // For automatic string/vector conversion
+#include <pybind11/numpy.h> // For numpy array support
 #include "types.hpp"
+#include "Grid.hpp"
 #include "flux/HLLSolver.hpp"
 #include "flux/HLLCSolver.hpp"
 #include "integrator/TimeIntegrator.hpp"
@@ -69,7 +71,28 @@ PYBIND11_MODULE(_core, m) {
         .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux using HLLC (restores contact surface)");
 
-    // 4. Bind Integrators
+    // 4. Bind Grid
+    py::class_<Grid>(m, "Grid")
+        .def(py::init<py::array_t<double>, int, int, int, int, int, double, double, double>(),
+             py::arg("data"), py::arg("dim"), py::arg("nx"), py::arg("ny"), py::arg("nz"), 
+             py::arg("ng"), py::arg("dx"), py::arg("dy"), py::arg("dz"),
+             "Create a Grid from a numpy array")
+        .def_readonly("nx", &Grid::nx)
+        .def_readonly("ny", &Grid::ny)
+        .def_readonly("nz", &Grid::nz)
+        .def_readonly("ndim", &Grid::ndim)
+        .def_readonly("ng", &Grid::ng)
+        .def_readonly("dx", &Grid::dx)
+        .def_readonly("dy", &Grid::dy)
+        .def_readonly("dz", &Grid::dz)
+        .def("get_state", &Grid::get_state, 
+             py::arg("i"), py::arg("j"), py::arg("k") = 0,
+             "Get state at cell (i, j, k)")
+        .def("apply_flux", py::overload_cast<int, int, int, const Flux&, double>(&Grid::apply_flux),
+             py::arg("i"), py::arg("j"), py::arg("k"), py::arg("flux"), py::arg("dt_over_dx"),
+             "Apply flux to cell (i, j, k)");
+
+    // 5. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 
     // Bind the Godunov Integrator
