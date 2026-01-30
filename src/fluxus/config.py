@@ -12,7 +12,7 @@ class SimulationConfig(BaseSettings):
     ng: int = Field(2, ge=2, description="Number of ghost cells")
     
     # Solver Strategy
-    riemann_solver: Literal["HLL", "HLLC", "Exact"] = "HLLC"
+    riemann_solver: Literal["HLL", "HLLC"] = "HLLC"
     time_integrator: Literal["Godunov", "RK2"] = "Godunov"
     cfl: float = Field(0.8, gt=0, le=1.0, description="CFL safety factor")
 

@@ -2,7 +2,7 @@
 #include <pybind11/stl.h> // For automatic string/vector conversion
 #include "types.hpp"
 #include "flux/HLLSolver.hpp"
-
+#include "flux/HLLCSolver.hpp"
 namespace py = pybind11;
 using namespace fluxus;
 
@@ -33,12 +33,18 @@ PYBIND11_MODULE(_core, m) {
         });
 
     // 3. Bind the Solvers
-    // We bind the Base Class first...
+    // bind the Base Class first...
     py::class_<RiemannSolver, std::shared_ptr<RiemannSolver>>(m, "RiemannSolver");
 
-    // ...then the HLL Solver inheriting from it
+    // Bind the HLL Solver
     py::class_<HLLSolver, RiemannSolver, std::shared_ptr<HLLSolver>>(m, "HLLSolver")
         .def(py::init<double>(), py::arg("gamma") = 1.4)
         .def("solve", &HLLSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux between two states");
+
+    // Bind the HLLC Solver
+    py::class_<HLLCSolver, RiemannSolver, std::shared_ptr<HLLCSolver>>(m, "HLLCSolver")
+        .def(py::init<double>(), py::arg("gamma") = 1.4)
+        .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
+             "Compute flux using HLLC (restores contact surface)");
 }
