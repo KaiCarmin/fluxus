@@ -44,16 +44,17 @@ namespace fluxus {
             double factor = rho_L * (S_L - L.u) / (S_L - S_star);
             
             Conserved U_star_L;
-            U_star_L[0] = factor;              // rho*
-            U_star_L[1] = factor * S_star;     // mom_x*
-            U_star_L[2] = factor * L.v;        // mom_y* (Tangential velocity is preserved!)
+            U_star_L.rho   = factor;              
+            U_star_L.mom_x = factor * S_star;     
+            U_star_L.mom_y = factor * L.v;   // v is preserved
+            U_star_L.mom_z = factor * L.w;   // w is preserved
             
             // Energy* is complicated:
             // E* = E_L + (S_star - u_L) * (S_star + p_L/(rho_L*(S_L - u_L))) * factor? 
             // Actually, simpler form: 
             // U*_E = factor * ( E_L/rho_L + (S_star - L.u)*(S_star + L.p/(rho_L*(S_L - L.u))) )
-            double E_term = (L.to_conserved(m_gamma).E / rho_L) + (S_star - L.u) * (S_star + L.p / (rho_L * (S_L - L.u)));
-            U_star_L[3] = factor * E_term;
+            double E_term = (U_L.E / rho_L) + (S_star - L.u) * (S_star + L.p / (rho_L * (S_L - L.u)));            
+            U_star_L.E = factor * E_term;
 
             return F_L + (U_star_L - U_L) * S_L;
         } 
@@ -65,12 +66,13 @@ namespace fluxus {
             double factor = rho_R * (S_R - R.u) / (S_R - S_star);
             
             Conserved U_star_R;
-            U_star_R[0] = factor;
-            U_star_R[1] = factor * S_star;
-            U_star_R[2] = factor * R.v;
+            U_star_R.rho   = factor;
+            U_star_R.mom_x = factor * S_star;
+            U_star_R.mom_y = factor * R.v;   // v is preserved
+            U_star_R.mom_z = factor * R.w;   // w is preserved
             
-            double E_term = (R.to_conserved(m_gamma).E / rho_R) + (S_star - R.u) * (S_star + R.p / (rho_R * (S_R - R.u)));
-            U_star_R[3] = factor * E_term;
+            double E_term = (U_R.E / rho_R) + (S_star - R.u) * (S_star + R.p / (rho_R * (S_R - R.u)));
+            U_star_R.E = factor * E_term;
 
             return F_R + (U_star_R - U_R) * S_R;
         }
