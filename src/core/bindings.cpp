@@ -95,9 +95,16 @@ PYBIND11_MODULE(_core, m) {
     // 5. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 
-    // Bind the Godunov Integrator
+    // Bind GodunovIntegrator
     py::class_<GodunovIntegrator, TimeIntegrator, std::shared_ptr<GodunovIntegrator>>(m, "GodunovIntegrator")
+        // Constructor
         .def(py::init<std::shared_ptr<RiemannSolver>>())
+        
+        // Step function
         .def("step", &GodunovIntegrator::step, py::arg("grid"), py::arg("dt"), 
-             "Advance the grid by one time step");
+             "Advance the grid by one time step")
+        
+        // --- NEW: Expose set_gravity ---
+        .def("set_gravity", &GodunovIntegrator::set_gravity, py::arg("g_y"), 
+             "Set gravity acceleration in Y direction (e.g. -9.81)");
 }
