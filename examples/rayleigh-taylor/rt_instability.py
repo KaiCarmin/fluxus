@@ -5,7 +5,7 @@ from fluxus.core import State
 
 # --- CONFIGURATION ---
 NX, NY = 100, 300   # Resolution
-STEPS = 1000
+STEPS = 10000
 PLOT_EVERY = 20
 GAMMA = 1.4
 CFL=0.8
