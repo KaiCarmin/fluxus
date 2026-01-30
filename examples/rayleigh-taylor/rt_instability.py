@@ -5,7 +5,6 @@ from fluxus.core import State
 
 # --- CONFIGURATION ---
 NX, NY = 100, 300   # Resolution
-DT = 0.0025
 STEPS = 1000
 PLOT_EVERY = 20
 GAMMA = 1.4
@@ -68,7 +67,7 @@ ax.set_title("Init")
 
 try:
     for step in range(STEPS):
-        sim.step(DT)
+        sim.step()
         
         if step % PLOT_EVERY == 0:
             print(f"Step {step}/{STEPS}")

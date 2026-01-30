@@ -86,7 +86,7 @@ class Simulation:
     def set_gravity(self, gy):
         self.integrator.set_gravity(gy)
 
-    def step(self, dt=None):
+    def step(self):
         """
         Advance the simulation.
         If dt is provided, run for that fixed time (dangerous!).
@@ -99,15 +99,12 @@ class Simulation:
         self.grid.apply_boundaries()
         
         # 2. Determine Time Step
-        actual_dt = dt
-        if actual_dt is None:
-            # Ask C++ to calculate stable dt
-            actual_dt = self.integrator.compute_dt(self.grid, self.cfl)
+        dt = self.integrator.compute_dt(self.grid, self.cfl)
             
         # 3. Advance Physics
-        self.integrator.step(self.grid, actual_dt)
+        self.integrator.step(self.grid, dt)
         
-        return actual_dt
+        return dt
         
     @property
     def density(self):
