@@ -46,18 +46,32 @@ namespace fluxus {
     // 3. The Primitive State (what we reconstruct)
     struct State {
         double rho, u, v, w, p;
+        
+        // ---------- Constructors ----------
+        // Default
+        State() : rho(0), u(0), v(0), w(0), p(0) {}
+
+        // 2D Constructor (what Python uses): w defaults to 0
+        State(double _rho, double _u, double _v, double _p)
+            : rho(_rho), u(_u), v(_v), w(0.0), p(_p) {}
+
+        // 3D Constructor (Full control)
+        State(double _rho, double _u, double _v, double _w, double _p)
+            : rho(_rho), u(_u), v(_v), w(_w), p(_p) {}
+        // ------------------------------------------
 
         double sound_speed(double gamma) const {
             return std::sqrt(gamma * p / rho);
         }
 
+        
         // Convert Primitive -> Conserved (U)
         Conserved to_conserved(double gamma) const {
             double kinetic = 0.5 * rho * (u*u + v*v + w*w);
             double internal_energy = p / (gamma - 1.0);
             return {rho, rho * u, rho * v, rho * w, internal_energy + kinetic};
         }
-        
+
         // Convert Conserved (U) -> Primitive
         static State from_conserved(double rho, double mom_x, double mom_y, double mom_z, double energy, double gamma) {
             State s;
