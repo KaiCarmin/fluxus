@@ -10,7 +10,10 @@ namespace fluxus {
         // Main stepping function
         void step(Grid& grid, double dt) override;
 
-        // NEW: Setter for gravity (Simple Y-direction gravity for now)
+        // Compute stable timestep based on CFL condition
+        double compute_dt(const Grid& grid, double cfl);
+
+        // Setter for gravity (Simple Y-direction gravity for now)
         void set_gravity(double g_y) { m_gravity_y = g_y; }
 
     private:

@@ -5,6 +5,60 @@
 
 namespace fluxus {
 
+    double GodunovIntegrator::compute_dt(const Grid& grid, double cfl) {
+        double max_sx = 1e-9;
+        double max_sy = 1e-9;
+        double max_sz = 1e-9;
+        double gamma = 1.4; // Ideally, get this from the solver or grid
+
+        // 1. Find Maximum Wave Speeds (Hydrodynamics)
+        // Use OpenMP reduction to make this fast on large grids
+        #pragma omp parallel for reduction(max:max_sx, max_sy, max_sz)
+        for (int k = 0; k < grid.nz; ++k) {
+            for (int j = 0; j < grid.ny; ++j) {
+                for (int i = 0; i < grid.nx; ++i) {
+                    State s = grid.get_state(i, j, k);
+
+                    if (s.rho > 1e-9 && s.p > 1e-9) {
+                        double c = std::sqrt(gamma * s.p / s.rho);
+                        
+                        // Wave speed = Fluid Velocity + Sound Speed
+                        if (std::abs(s.u) + c > max_sx) max_sx = std::abs(s.u) + c;
+                        if (std::abs(s.v) + c > max_sy) max_sy = std::abs(s.v) + c;
+                        if (std::abs(s.w) + c > max_sz) max_sz = std::abs(s.w) + c;
+                    }
+                }
+            }
+        }
+
+        // 2. Compute Hydrodynamic dt limit
+        double dt_x = grid.dx / max_sx;
+        double dt_hydro = dt_x;
+
+        if (grid.ndim >= 2) {
+            double dt_y = grid.dy / max_sy;
+            dt_hydro = std::min(dt_hydro, dt_y);
+        }
+        if (grid.ndim == 3) {
+            double dt_z = grid.dz / max_sz;
+            dt_hydro = std::min(dt_hydro, dt_z);
+        }
+
+        // 3. Compute Gravity dt limit (if gravity is active)
+        // Physics: Distance = 0.5 * a * t^2  -->  t = sqrt(2*d/a)
+        double dt_grav = 1e30; // Infinite
+        if (std::abs(m_gravity_y) > 1e-12) {
+            double min_d = grid.dx;
+            if (grid.ndim >= 2) min_d = std::min(min_d, grid.dy);
+            if (grid.ndim == 3) min_d = std::min(min_d, grid.dz);
+            
+            dt_grav = std::sqrt(2.0 * min_d / std::abs(m_gravity_y));
+        }
+
+        // 4. Return safe dt
+        return cfl * std::min(dt_hydro, dt_grav);
+    }
+
     void GodunovIntegrator::step(Grid& grid, double dt) {
         // 1. Fluid Dynamics (Fluxes) with Dimensional Splitting
         sweep_x(grid, dt);

@@ -19,7 +19,7 @@ PYBIND11_MODULE(_core, m) {
         .def(py::init<double, double, double, double>(), 
              py::arg("rho"), py::arg("u"), py::arg("v"), py::arg("p"))
         
-        // --- NEW: 3D Constructor ---
+        // 3D Constructor
         .def(py::init<double, double, double, double, double>(), 
              py::arg("rho"), py::arg("u"), py::arg("v"), py::arg("w"), py::arg("p"))
         
@@ -112,7 +112,11 @@ PYBIND11_MODULE(_core, m) {
         .def("step", &GodunovIntegrator::step, py::arg("grid"), py::arg("dt"), 
              "Advance the grid by one time step")
         
-        // --- NEW: Expose set_gravity ---
+        // Expose set_gravity
         .def("set_gravity", &GodunovIntegrator::set_gravity, py::arg("g_y"), 
-             "Set gravity acceleration in Y direction (e.g. -9.81)");
+             "Set gravity acceleration in Y direction (e.g. -9.81)")
+        
+        // compute_dt function
+        .def("compute_dt", &GodunovIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"),
+         "Calculate stable time step based on CFL condition");
 }

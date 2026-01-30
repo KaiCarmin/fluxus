@@ -2,13 +2,14 @@ import numpy as np
 from fluxus.core import Grid, State, HLLCSolver, GodunovIntegrator, BoundaryType
 
 class Simulation:
-    def __init__(self, nx, ny, extent_x=1.0, extent_y=1.0, ng=2, gamma=1.4):
+    def __init__(self, nx, ny, extent_x=1.0, extent_y=1.0, ng=2, gamma=1.4, cfl=0.8):
         self.nx = nx
         self.ny = ny
         self.ng = ng
         self.gamma = gamma
         self.dx = extent_x / nx
         self.dy = extent_y / ny
+        self.cfl = cfl
         
         # 1. Allocate Unified Memory (1D/2D/3D supported)
         # 5 vars: rho, mom_x, mom_y, mom_z, E
@@ -28,7 +29,7 @@ class Simulation:
             BoundaryType.Transmissive, BoundaryType.Transmissive,
             BoundaryType.Transmissive, BoundaryType.Transmissive
         )
-
+    
     def set_initial_condition(self, func):
         """
         Apply a function func(x, y) -> State to every cell in the domain.
@@ -85,11 +86,28 @@ class Simulation:
     def set_gravity(self, gy):
         self.integrator.set_gravity(gy)
 
-    def step(self, dt):
-        # IMPORTANT: Apply boundaries BEFORE stepping!
-        # This ensures ghost cells have valid data for the fluxes.
+    def step(self, dt=None):
+        """
+        Advance the simulation.
+        If dt is provided, run for that fixed time (dangerous!).
+        If dt is None, calculate it dynamically using CFL.
+        Returns the actual dt used.
+        """
+        # 1. Apply Boundaries first (ghosts needed for dt calculation?)
+        # Strictly speaking, CFL only depends on internal cells, 
+        # but boundaries ensure safety at edges.
         self.grid.apply_boundaries()
-        self.integrator.step(self.grid, dt)
+        
+        # 2. Determine Time Step
+        actual_dt = dt
+        if actual_dt is None:
+            # Ask C++ to calculate stable dt
+            actual_dt = self.integrator.compute_dt(self.grid, self.cfl)
+            
+        # 3. Advance Physics
+        self.integrator.step(self.grid, actual_dt)
+        
+        return actual_dt
         
     @property
     def density(self):
