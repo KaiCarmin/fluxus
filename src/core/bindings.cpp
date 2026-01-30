@@ -3,6 +3,8 @@
 #include "types.hpp"
 #include "flux/HLLSolver.hpp"
 #include "flux/HLLCSolver.hpp"
+#include "integrator/TimeIntegrator.hpp"
+#include "integrator/Godunov.hpp"
 namespace py = pybind11;
 using namespace fluxus;
 
@@ -66,4 +68,13 @@ PYBIND11_MODULE(_core, m) {
         .def(py::init<double>(), py::arg("gamma") = 1.4)
         .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux using HLLC (restores contact surface)");
+
+    // 4. Bind Integrators
+    py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
+
+    // Bind the Godunov Integrator
+    py::class_<GodunovIntegrator, TimeIntegrator, std::shared_ptr<GodunovIntegrator>>(m, "GodunovIntegrator")
+        .def(py::init<std::shared_ptr<RiemannSolver>>())
+        .def("step", &GodunovIntegrator::step, py::arg("grid"), py::arg("dt"), 
+             "Advance the grid by one time step");
 }
