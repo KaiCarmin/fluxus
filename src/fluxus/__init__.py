@@ -23,21 +23,20 @@ except ImportError as e:
 sys.modules['fluxus.core'] = core
 
 # 3. Flatten the Namespace (The Facade Pattern)
-# These imports allow users to access classes directly from the top level.
-# e.g. 'from fluxus import SimulationConfig' instead of 'from fluxus.config import SimulationConfig'
-
-# Note: Only uncomment these if you have actually created these files!
-from .config import SimulationConfig
-from .utils import setup_logger
-from .simulation import Simulation
-
-# 4. Define Public API
-# This controls what gets imported if someone types 'from fluxus import *'
-__all__ = ["core", "Simulation", "SimulationConfig", "setup_logger"]
-
-__all__ = [
-    "__version__",
-    "Simulation",
-    "SimulationConfig",
-    "setup_logger",
-]
+# Import other modules after core is set up to avoid circular imports
+try:
+    from .config import SimulationConfig
+    from .utils import setup_logger
+    from .simulation import Simulation
+    
+    # 4. Define Public API
+    __all__ = [
+        "__version__",
+        "core",
+        "Simulation",
+        "SimulationConfig",
+        "setup_logger",
+    ]
+except ImportError:
+    # If other modules fail to import, at least make core available
+    __all__ = ["__version__", "core"]

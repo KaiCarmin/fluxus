@@ -14,8 +14,13 @@ file(GLOB_RECURSE BINDINGS "src/core/bindings.cpp")
 python_add_library(_core MODULE ${SOURCES} ${BINDINGS})
 
 # This tells CMake: "Put the compiled .pyd file inside src/fluxus/"
+# We need to set this for all configurations to prevent MSVC from creating Debug/Release subdirs
 set_target_properties(_core PROPERTIES 
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/src/fluxus"
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/src/fluxus"
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/src/fluxus"
+    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_SOURCE_DIR}/src/fluxus"
+    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_SOURCE_DIR}/src/fluxus"
 )
 
 # Link Pybind11 headers so the compiler can find "pybind11.h"
