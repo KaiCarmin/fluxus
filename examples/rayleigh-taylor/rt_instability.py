@@ -9,9 +9,10 @@ DT = 0.0025
 STEPS = 1000
 PLOT_EVERY = 20
 GAMMA = 1.4
+CFL=0.8
 
 # 1. Setup Simulation (using your new class)
-sim = Simulation(nx=NX, ny=NY, extent_x=0.25, extent_y=0.75, gamma=GAMMA)
+sim = Simulation(nx=NX, ny=NY, extent_x=0.25, extent_y=0.75, gamma=GAMMA, cfl=CFL)
 
 # 2. Set Boundaries
 # Reflective on top/bottom (walls), Transmissive on sides (or Periodic)
