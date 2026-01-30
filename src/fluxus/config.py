@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 from typing import Literal
 
@@ -20,10 +20,6 @@ class SimulationConfig(BaseSettings):
     @field_validator("riemann_solver")
     @classmethod
     def check_solver_support(cls, v):
-        if v == "Exact":
-            print("Warning: Exact solver is slow!")
         return v
 
-    class Config:
-        # Allows loading from environment variables (e.g., FLUXUS_GAMMA=1.67)
-        env_prefix = "FLUXUS_"
+    model_config = SettingsConfigDict(env_prefix="FLUXUS_")
