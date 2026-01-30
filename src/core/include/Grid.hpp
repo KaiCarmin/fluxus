@@ -1,5 +1,6 @@
 #pragma once
 #include <pybind11/numpy.h>
+#include <vector>
 #include "types.hpp"
 
 namespace py = pybind11;
@@ -8,69 +9,52 @@ namespace fluxus {
 
     class Grid {
     public:
-        // Dimensions must be public for the Integrator to see them
-        int nx, ny, nz;
-        int ndim; 
-        int ng;
+        // Dimensions
+        int nx, ny, nz, ndim, ng;
         double dx, dy, dz;
+
+        // Boundary Configuration (Default to Transmissive)
+        BoundaryType bc_x_min = BoundaryType::Transmissive;
+        BoundaryType bc_x_max = BoundaryType::Transmissive;
+        BoundaryType bc_y_min = BoundaryType::Transmissive;
+        BoundaryType bc_y_max = BoundaryType::Transmissive;
 
         // Constructor
         Grid(py::array_t<double> data, int dim, int _nx, int _ny, int _nz, int _ng, double _dx, double _dy, double _dz)
             : m_data(data), ndim(dim), nx(_nx), ny(_ny), nz(_nz), ng(_ng), dx(_dx), dy(_dy), dz(_dz)
         {
             ptr = static_cast<double*>(m_data.request().ptr);            
-            
-            // 5 variables per cell [rho, mom_x, mom_y, mom_z, E]
             stride_x = 5; 
             stride_y = (nx + 2 * ng) * stride_x; 
             stride_z = (ny + 2 * ng) * stride_y;
         }
 
-        // Accessor: Now accepts optional 'k' for 3D (default 0 for 2D)
-        State get_state(int i, int j, int k = 0) const {
-            int idx = get_index(i, j, k);
-            
-            // Read 5 components (Vector5)
-            // Using indices [0]..[4] corresponds to rho, mom_x, mom_y, mom_z, E
-            return State::from_conserved(
-                ptr[idx],     // rho
-                ptr[idx + 1], // mom_x
-                ptr[idx + 2], // mom_y
-                ptr[idx + 3], // mom_z  <-- NEW
-                ptr[idx + 4], // E      <-- Shifted
-                1.4           // gamma (should ideally be passed in, but fixed for now)
-            ); 
+        // --- NEW: Setters for Python ---
+        void set_boundaries(BoundaryType x_min, BoundaryType x_max, BoundaryType y_min, BoundaryType y_max) {
+            bc_x_min = x_min; bc_x_max = x_max;
+            bc_y_min = y_min; bc_y_max = y_max;
         }
 
-        // Writer: Now writes all 5 components
-        void apply_flux(int i, int j, int k, const Flux& f, double dt_over_dx) {
-            int idx = get_index(i, j, k);
-            
-            // Vectorized update if compiler is smart, otherwise manual unroll:
-            ptr[idx]     -= dt_over_dx * f.rho;
-            ptr[idx + 1] -= dt_over_dx * f.mom_x;
-            ptr[idx + 2] -= dt_over_dx * f.mom_y;
-            ptr[idx + 3] -= dt_over_dx * f.mom_z; // <-- NEW
-            ptr[idx + 4] -= dt_over_dx * f.E;
-        }
-        
-        // Overload for 2D legacy calls (just assumes k=0)
-        void apply_flux(int i, int j, const Flux& f, double dt_over_dx) {
-            apply_flux(i, j, 0, f, dt_over_dx);
-        }
+        // --- NEW: The Heavy Lifter ---
+        void apply_boundaries();
+
+        // (Keep get_state, apply_flux, and private members the same)
+        // ... 
+        State get_state(int i, int j, int k = 0) const { /* ... */ }
+        void apply_flux(int i, int j, int k, const Flux& f, double dt_over_dx) { /* ... */ }
 
     private:
         py::array_t<double> m_data;
         double* ptr;
         int stride_x, stride_y, stride_z;
-
-        // Flatten 3D (i,j,k) to 1D index
+        
         inline int get_index(int i, int j, int k) const {
-            // Adjust for ghost cells offset in all directions
-            // If 2D, k=0 and nz=1, so we just assume 'ng' offset in Z is 0 if not used? 
-            // For safety in 2D simulations, usually we don't use ghost cells in Z.
-            // Simplified logic:
             return k * stride_z + (j + ng) * stride_y + (i + ng) * stride_x;
         }
+        
+        // Helper to copy/invert state
+        void set_ghost_cell(int dest_i, int dest_j, int dest_k, 
+                            int src_i, int src_j, int src_k, 
+                            BoundaryType type, int axis_normal);
     };
 }

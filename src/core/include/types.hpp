@@ -98,4 +98,11 @@ namespace fluxus {
             };
         }
     };
+
+    // 4. Boundary Condition Types
+    enum class BoundaryType {
+        Transmissive, // Zero gradient (copy edge value to ghost)
+        Reflective,   // Wall (invert normal velocity)
+        Periodic      // Wrap around
+    };
 }

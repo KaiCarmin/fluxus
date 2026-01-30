@@ -55,21 +55,12 @@ PYBIND11_MODULE(_core, m) {
                    " E=" + std::to_string(f.E) + ">";
         });
 
-    // 3. Bind the Solvers
-    // bind the Base Class first...
-    py::class_<RiemannSolver, std::shared_ptr<RiemannSolver>>(m, "RiemannSolver");
-
-    // Bind the HLL Solver
-    py::class_<HLLSolver, RiemannSolver, std::shared_ptr<HLLSolver>>(m, "HLLSolver")
-        .def(py::init<double>(), py::arg("gamma") = 1.4)
-        .def("solve", &HLLSolver::solve, py::arg("L"), py::arg("R"), 
-             "Compute flux between two states");
-
-    // Bind the HLLC Solver
-    py::class_<HLLCSolver, RiemannSolver, std::shared_ptr<HLLCSolver>>(m, "HLLCSolver")
-        .def(py::init<double>(), py::arg("gamma") = 1.4)
-        .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
-             "Compute flux using HLLC (restores contact surface)");
+    // 3. Bind Boundary Enum Type
+    py::enum_<BoundaryType>(m, "BoundaryType")
+        .value("Transmissive", BoundaryType::Transmissive)
+        .value("Reflective", BoundaryType::Reflective)
+        .value("Periodic", BoundaryType::Periodic)
+        .export_values();
 
     // 4. Bind Grid
     py::class_<Grid>(m, "Grid")
@@ -90,9 +81,26 @@ PYBIND11_MODULE(_core, m) {
              "Get state at cell (i, j, k)")
         .def("apply_flux", py::overload_cast<int, int, int, const Flux&, double>(&Grid::apply_flux),
              py::arg("i"), py::arg("j"), py::arg("k"), py::arg("flux"), py::arg("dt_over_dx"),
-             "Apply flux to cell (i, j, k)");
+             "Apply flux to cell (i, j, k)")
+        .def("set_boundaries", &Grid::set_boundaries, py::arg("x_min"), py::arg("x_max"), py::arg("y_min"), py::arg("y_max"))
+        .def("apply_boundaries", &Grid::apply_boundaries);
 
-    // 5. Bind Integrators
+    // 5. Bind the Solvers
+    py::class_<RiemannSolver, std::shared_ptr<RiemannSolver>>(m, "RiemannSolver");
+
+    // Bind the HLL Solver
+    py::class_<HLLSolver, RiemannSolver, std::shared_ptr<HLLSolver>>(m, "HLLSolver")
+        .def(py::init<double>(), py::arg("gamma") = 1.4)
+        .def("solve", &HLLSolver::solve, py::arg("L"), py::arg("R"), 
+             "Compute flux between two states");
+
+    // Bind the HLLC Solver
+    py::class_<HLLCSolver, RiemannSolver, std::shared_ptr<HLLCSolver>>(m, "HLLCSolver")
+        .def(py::init<double>(), py::arg("gamma") = 1.4)
+        .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
+             "Compute flux using HLLC (restores contact surface)");
+
+    // 6. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 
     // Bind GodunovIntegrator
