@@ -16,27 +16,26 @@ def gamma():
 def test_supersonic_flow(SolverClass, solver_name, gamma):
     """
     Physical Check: Supersonic flow to the right.
-    The Flux should be exactly exactly F(LeftState), because
-    no information from the Right can travel upstream against the flow.
+    Both states must be moving faster than their sound speed to the right.
     """
     solver = SolverClass(gamma)
     
-    # Left: High pressure, Moving FAST to the right (Supersonic)
-    # Sound speed ~ 1.18. Velocity = 10.0. Mach >> 1.
+    # Left: Mach ~8.5 (10 / 1.18)
     L = State(rho=1.0, u=10.0, v=0.0, p=1.0)
-    R = State(rho=0.125, u=0.0, v=0.0, p=0.1) # Standard Sod Right state
+    
+    # Right: Mach ~9.4 (10 / 1.06) <-- CHANGED u from 0.0 to 10.0
+    R = State(rho=0.125, u=10.0, v=0.0, p=0.1) 
 
     flux = solver.solve(L, R)
     
-    # Calculate expected physical flux from L manually
-    # Flux_mass = rho * u = 1.0 * 10.0 = 10.0
-    expected_mass_flux = L.rho * L.u
+    # Now S_L = min(L.u - a_L, R.u - a_R)
+    # S_L = min(8.8, 8.9) > 0
+    # Solver should detect S_L > 0 and immediately return F(L)
     
-    # Allow small floating point tolerance
+    expected_mass_flux = L.rho * L.u # 1.0 * 10.0 = 10.0
+    
     assert flux.rho == pytest.approx(expected_mass_flux, rel=1e-5)
     assert flux.mom_x == pytest.approx(L.rho * L.u**2 + L.p, rel=1e-5)
-    
-    print(f"\n[{solver_name}] Supersonic Test Passed: Mass Flux {flux.rho}")
 
 @pytest.mark.parametrize("SolverClass, solver_name", SOLVERS)
 def test_symmetry(SolverClass, solver_name, gamma):
