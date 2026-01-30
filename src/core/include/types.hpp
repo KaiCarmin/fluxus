@@ -6,28 +6,34 @@ namespace fluxus {
 
     // 1. The fundamental Math Object
     struct Vector4 {
-        double data[4]; // rho, mom_x, mom_y, E
+        // Anonymous union: 'data' and the struct share the same memory.
+        union {
+            double data[4];
+            struct {
+                double rho;    // data[0]
+                double mom_x;  // data[1]
+                double mom_y;  // data[2]
+                double E;      // data[3]
+            };
+        };
 
         // Constructor
         Vector4(double d0 = 0, double d1 = 0, double d2 = 0, double d3 = 0) 
-            : data{d0, d1, d2, d3} {}
+            : rho(d0), mom_x(d1), mom_y(d2), E(d3) {}
 
-        // Accessors for readability
+        // 1. Array Access (for loops)
         double& operator[](int i) { return data[i]; }
         const double& operator[](int i) const { return data[i]; }
 
-        // Math Operators (Essential for Godunov: U - dt/dx * F)
+        // 2. Math Operators (Vector arithmetic)
         Vector4 operator+(const Vector4& other) const {
-            return {data[0] + other.data[0], data[1] + other.data[1], 
-                    data[2] + other.data[2], data[3] + other.data[3]};
+            return {rho + other.rho, mom_x + other.mom_x, mom_y + other.mom_y, E + other.E};
         }
         Vector4 operator-(const Vector4& other) const {
-            return {data[0] - other.data[0], data[1] - other.data[1], 
-                    data[2] - other.data[2], data[3] - other.data[3]};
+            return {rho - other.rho, mom_x - other.mom_x, mom_y - other.mom_y, E - other.E};
         }
         Vector4 operator*(double scalar) const {
-            return {data[0] * scalar, data[1] * scalar, 
-                    data[2] * scalar, data[3] * scalar};
+            return {rho * scalar, mom_x * scalar, mom_y * scalar, E * scalar};
         }
     };
 
