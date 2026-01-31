@@ -1,7 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
 from fluxus.simulation import Simulation, BoundaryType
-from fluxus.core import HLLCSolver, GodunovIntegrator, State
+from fluxus.core import (
+    HLLCSolver, 
+    GodunovIntegrator, 
+    State,
+    PiecewiseConstantReconstructor
+)
+
 from fluxus.utils import setup_logger
 
 # Setup logger
@@ -23,7 +30,8 @@ logger.info(f"Physics: GAMMA={GAMMA}, G_Y={G_Y}, STEPS={STEPS}")
 # 1. Build Physics Stack
 logger.info("Building physics stack with HLLC solver and Godunov integrator")
 solver = HLLCSolver(GAMMA)
-integrator = GodunovIntegrator(solver)
+reconstructor = PiecewiseConstantReconstructor()
+integrator = GodunovIntegrator(solver, reconstructor)
 integrator.set_gravity(G_Y)
 logger.debug(f"Gravity set to {G_Y}")
 

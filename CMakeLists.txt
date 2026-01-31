@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 project(fluxus_core LANGUAGES CXX)
 
+# Require C++17 for structured bindings and other modern features
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # 1. Setup Python & Pybind11
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)

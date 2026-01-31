@@ -1,10 +1,12 @@
 #include "integrator/Godunov.hpp"
 #include <vector>
 #include <cmath>
-#include <omp.h> // Optional: For parallel execution
+#include <algorithm> // For std::max, std::min
+#include <omp.h>     // Optional: For parallel execution
 
 namespace fluxus {
 
+    // --- ADAPTIVE TIME STEPPING ---
     double GodunovIntegrator::compute_dt(const Grid& grid, double cfl) {
         double max_sx = 1e-9;
         double max_sy = 1e-9;
@@ -59,6 +61,7 @@ namespace fluxus {
         return cfl * std::min(dt_hydro, dt_grav);
     }
 
+    // --- MAIN STEP FUNCTION ---
     void GodunovIntegrator::step(Grid& grid, double dt) {
         // 1. Fluid Dynamics (Fluxes) with Dimensional Splitting
         sweep_x(grid, dt);
@@ -83,10 +86,12 @@ namespace fluxus {
         for (int k = 0; k < grid.nz; ++k) {
             for (int j = 0; j < grid.ny; ++j) {
                 
-                // STEP 1: Compute ALL fluxes for this row using the OLD state
+                // STEP 1: Compute ALL fluxes for this row using the RECONSTRUCTOR
                 for (int i = 0; i < grid.nx + 1; ++i) {
-                    State L = grid.get_state(i - 1, j, k);
-                    State R = grid.get_state(i, j, k);
+                    // Reconstruct Left and Right states at interface i
+                    // (Interface i is between cell i-1 and cell i)
+                    auto [L, R] = m_reconstructor->reconstruct_interface(grid, i, j, k, 0); // 0 = X Axis
+
                     fluxes[i] = m_riemann_solver->solve(L, R);
                 }
 
@@ -115,8 +120,8 @@ namespace fluxus {
                 
                 // STEP 1: Compute Fluxes
                 for (int j = 0; j < grid.ny + 1; ++j) {
-                    State L_raw = grid.get_state(i, j - 1, k);
-                    State R_raw = grid.get_state(i, j, k);
+                    // Reconstruct raw states at Y-interface j
+                    auto [L_raw, R_raw] = m_reconstructor->reconstruct_interface(grid, i, j, k, 1); // 1 = Y Axis
 
                     // ROTATE: Normal velocity becomes 'u' (swap u and v)
                     State L_rot = L_raw; L_rot.u = L_raw.v; L_rot.v = L_raw.u;
@@ -151,8 +156,8 @@ namespace fluxus {
                 
                 // STEP 1: Compute Fluxes
                 for (int k = 0; k < grid.nz + 1; ++k) {
-                    State L_raw = grid.get_state(i, j, k - 1);
-                    State R_raw = grid.get_state(i, j, k);
+                    // Reconstruct raw states at Z-interface k
+                    auto [L_raw, R_raw] = m_reconstructor->reconstruct_interface(grid, i, j, k, 2); // 2 = Z Axis
 
                     // ROTATE: Normal velocity becomes 'u' (swap u and w)
                     State L_rot = L_raw; L_rot.u = L_raw.w; L_rot.w = L_raw.u;

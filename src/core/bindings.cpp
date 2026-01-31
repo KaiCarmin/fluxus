@@ -1,12 +1,19 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h> // For automatic string/vector conversion
 #include <pybind11/numpy.h> // For numpy array support
+
 #include "types.hpp"
 #include "Grid.hpp"
+
 #include "flux/HLLSolver.hpp"
 #include "flux/HLLCSolver.hpp"
+
 #include "integrator/TimeIntegrator.hpp"
 #include "integrator/Godunov.hpp"
+
+#include "reconstruct/Reconstructor.hpp"
+#include "reconstruct/PiecewiseConstant.hpp"
+
 namespace py = pybind11;
 using namespace fluxus;
 
@@ -99,23 +106,28 @@ PYBIND11_MODULE(_core, m) {
         .def(py::init<double>(), py::arg("gamma") = 1.4)
         .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux using HLLC (restores contact surface)");
+    
+    // 6. Bind Reconstructors
+    py::class_<Reconstructor, std::shared_ptr<Reconstructor>>(m, "Reconstructor");
 
-    // 6. Bind Integrators
+    // Bind PiecewiseConstant
+    py::class_<PiecewiseConstantReconstructor, Reconstructor, std::shared_ptr<PiecewiseConstantReconstructor>>(m, "PiecewiseConstantReconstructor")
+        .def(py::init<>());
+        
+    // 7. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 
     // Bind GodunovIntegrator
     py::class_<GodunovIntegrator, TimeIntegrator, std::shared_ptr<GodunovIntegrator>>(m, "GodunovIntegrator")
         // Constructor
         .def(py::init<std::shared_ptr<RiemannSolver>>())
-        
+        .def(py::init<std::shared_ptr<RiemannSolver>, std::shared_ptr<Reconstructor>>())
         // Step function
         .def("step", &GodunovIntegrator::step, py::arg("grid"), py::arg("dt"), 
              "Advance the grid by one time step")
-        
         // Expose set_gravity
         .def("set_gravity", &GodunovIntegrator::set_gravity, py::arg("g_y"), 
              "Set gravity acceleration in Y direction (e.g. -9.81)")
-        
         // compute_dt function
         .def("compute_dt", &GodunovIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"),
          "Calculate stable time step based on CFL condition");

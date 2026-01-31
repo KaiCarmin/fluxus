@@ -2,7 +2,7 @@
 #include "Reconstructor.hpp"
 
 namespace fluxus {
-    class PiecewiseConstant : public Reconstructor {
+    class PiecewiseConstantReconstructor : public Reconstructor {
     public:
         std::pair<State, State> reconstruct_interface(
             const Grid& grid, int i, int j, int k, int axis
