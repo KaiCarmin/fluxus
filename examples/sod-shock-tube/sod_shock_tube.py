@@ -1,54 +1,72 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from fluxus.simulation import Simulation
-from fluxus.core import BoundaryType, State
+from fluxus.core import BoundaryType, State, HLLCSolver, GodunovIntegrator
+from fluxus.utils import setup_logger
+
+# Setup logger
+logger = setup_logger(level="INFO")
 
 # --- CONFIGURATION ---
 NX = 200
-DT = 0.002  # Small time step
-T_MAX = 0.2 # Standard end time for Sod
+DT = 0.002
+T_MAX = 0.2
 GAMMA = 1.4
+CFL = 0.5
 
-# 1. Initialize Simulation
-# We create a 1D domain (ny=1) from x=0 to x=1.0
-sim = Simulation(nx=NX, ny=1, extent_x=1.0, extent_y=0.1, gamma=GAMMA)
+logger.info(f"Configuration: NX={NX}, DT={DT}, T_MAX={T_MAX}, GAMMA={GAMMA}, CFL={CFL}")
 
-# 2. Define Initial Conditions
-# Left: High Pressure/Density | Right: Low Pressure/Density
+# 1. Build the Physics Stack (Dependency Injection)
+#    We explicitly choose the HLLC Riemann Solver and Godunov Integrator.
+logger.info("Building physics stack with HLLC solver and Godunov integrator")
+solver = HLLCSolver(GAMMA)
+integrator = GodunovIntegrator(solver)
+
+# 2. Initialize Simulation
+logger.info(f"Initializing simulation: nx={NX}, ny=1, extent_x=1.0, extent_y=0.1")
+sim = Simulation(nx=NX, ny=1, integrator=integrator, extent_x=1.0, extent_y=0.1, cfl=CFL)
+
+# 3. Define Initial Conditions (Sod Shock Tube)
+#    Left: High Pressure | Right: Low Pressure
 def sod_ic(x, y):
     if x < 0.5:
-        # Left State
         return State(rho=1.0, u=0.0, v=0.0, p=1.0)
     else:
-        # Right State
         return State(rho=0.125, u=0.0, v=0.0, p=0.1)
 
+logger.info("Setting initial condition: Sod shock tube (discontinuity at x=0.5)")
 sim.set_initial_condition(sod_ic)
 
-# 3. Set Boundaries
-# Transmissive (Outflow) lets waves leave the domain without reflecting
+# 4. Set Boundaries
+#    Transmissive (Outflow) allows the waves to exit the domain cleanly.
+logger.info("Setting boundaries: Transmissive on all sides")
 sim.set_boundaries(
     BoundaryType.Transmissive, BoundaryType.Transmissive, # X-Left, X-Right
-    BoundaryType.Transmissive, BoundaryType.Transmissive  # Y-Top, Y-Bottom (Irrelevant for 1D)
+    BoundaryType.Transmissive, BoundaryType.Transmissive  # Y-Top, Y-Bottom
 )
 
-# 4. Run Loop
-print("Starting Sod Shock Tube Simulation...")
+# 5. Run Loop
+logger.info("Starting Sod Shock Tube Simulation...")
 t = 0.0
 step = 0
 
-# Arrays to store history for plotting
+# Track history to ensure we hit T_MAX exactly
 while t < T_MAX:
+    # Use adaptive stepping if you prefer: dt_used = sim.step()
+    # But for valid comparison to textbooks, we often force a fixed dt here.
     sim.step(DT)
     t += DT
     step += 1
-    if step % 10 == 0:
-        print(f"Time: {t:.3f} / {T_MAX}")
+    
+    if step % 20 == 0:
+        logger.info(f"Step {step}: t={t:.3f}")
 
-# 5. Extract Data
-# sim.data is a flat 1D array of conserved variables. 
-# We need to parse it back to primitives (rho, u, p) for plotting.
-# (The Simulation class helper only gave density, let's grab everything manually)
+logger.info(f"Simulation completed: {step} steps, final time t={t:.3f}")
+
+# 6. Visualization
+logger.info("Generating visualization...")
+#    Extract primitive variables from the simulation data
+#    (Using the helper property .density is easier, but here we want Velocity/Pressure too)
 
 # Reshape to (NY, NX, 5) and strip ghosts
 raw = sim.data.reshape(sim.ny + 2*sim.ng, sim.nx + 2*sim.ng, 5)
@@ -61,13 +79,11 @@ E = data_1d[:, 4]
 
 # Compute Primitives
 u = mom_x / rho
-# p = (gamma - 1) * (E - 0.5 * rho * u^2)
 kinetic = 0.5 * rho * u**2
 p = (GAMMA - 1.0) * (E - kinetic)
 
 x_axis = np.linspace(0, 1.0, NX)
 
-# 6. Visualization
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
 # Density
