@@ -13,6 +13,7 @@
 
 #include "reconstruct/Reconstructor.hpp"
 #include "reconstruct/PiecewiseConstant.hpp"
+#include "reconstruct/Minmod.hpp"
 
 namespace py = pybind11;
 using namespace fluxus;
@@ -20,6 +21,7 @@ using namespace fluxus;
 PYBIND11_MODULE(_core, m) {
     m.doc() = "Fluxus High-Performance Core";
 
+    // ------------------------------------------
     // 1. Bind the State struct
     py::class_<State>(m, "State")
         // 2D Constructor (existing)
@@ -45,6 +47,7 @@ PYBIND11_MODULE(_core, m) {
                    " p=" + std::to_string(s.p) + ">";
         });
 
+    // ------------------------------------------
     // 2. Bind the Flux (Vector5) struct
     py::class_<Flux>(m, "Flux")
         // We use lambdas to access the union members safely
@@ -62,6 +65,7 @@ PYBIND11_MODULE(_core, m) {
                    " E=" + std::to_string(f.E) + ">";
         });
 
+    // ------------------------------------------
     // 3. Bind Boundary Enum Type
     py::enum_<BoundaryType>(m, "BoundaryType")
         .value("Transmissive", BoundaryType::Transmissive)
@@ -69,6 +73,7 @@ PYBIND11_MODULE(_core, m) {
         .value("Periodic", BoundaryType::Periodic)
         .export_values();
 
+    // ------------------------------------------
     // 4. Bind Grid
     py::class_<Grid>(m, "Grid")
         .def(py::init<py::array_t<double>, int, int, int, int, int, double, double, double>(),
@@ -92,6 +97,7 @@ PYBIND11_MODULE(_core, m) {
         .def("set_boundaries", &Grid::set_boundaries, py::arg("x_min"), py::arg("x_max"), py::arg("y_min"), py::arg("y_max"))
         .def("apply_boundaries", &Grid::apply_boundaries);
 
+    // ------------------------------------------
     // 5. Bind the Solvers
     py::class_<RiemannSolver, std::shared_ptr<RiemannSolver>>(m, "RiemannSolver");
 
@@ -107,13 +113,19 @@ PYBIND11_MODULE(_core, m) {
         .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux using HLLC (restores contact surface)");
     
+    // ------------------------------------------
     // 6. Bind Reconstructors
     py::class_<Reconstructor, std::shared_ptr<Reconstructor>>(m, "Reconstructor");
 
     // Bind PiecewiseConstant
     py::class_<PiecewiseConstantReconstructor, Reconstructor, std::shared_ptr<PiecewiseConstantReconstructor>>(m, "PiecewiseConstantReconstructor")
         .def(py::init<>());
-        
+
+    // Bind MinmodReconstructor
+    py::class_<MinmodReconstructor, Reconstructor, std::shared_ptr<MinmodReconstructor>>(m, "MinmodReconstructor")
+        .def(py::init<>());
+
+    // ------------------------------------------
     // 7. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 

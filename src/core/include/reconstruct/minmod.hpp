@@ -6,39 +6,77 @@
 namespace fluxus {
 
     class MinmodReconstructor : public Reconstructor {
+    public:
         
-        // Helper: The Minmod Limiter Function
-        // Returns the smallest slope if signs agree, else 0.
-        double minmod(double a, double b) {
-            if (a * b > 0) {
+        // The Minmod Limiter: Selects the flattest valid slope to prevent oscillations.
+        // Returns 0 if slopes have opposite signs (extrema).
+        inline double minmod(double a, double b) {
+            if (a * b > 0.0) {
                 return (std::abs(a) < std::abs(b)) ? a : b;
             }
             return 0.0;
         }
-        
-        // Helper: Reconstruct one variable (e.g., density)
-        // Returns {val_L, val_R} at the interface between i and i+1
-        std::pair<double, double> reconstruct_scalar(double q_minus, double q_cen, double q_plus) {
-            // Slopes
-            double slope_L = q_cen - q_minus;
-            double slope_R = q_plus - q_cen;
+
+        // Helper to reconstruct a single scalar variable
+        // We need 3 values: Left-of-center, Center, Right-of-center
+        // to compute the slope at the Center.
+        // Returns the value at the boundary face.
+        // side: +1 for Right Face (U + 0.5*slope), -1 for Left Face (U - 0.5*slope)
+        double reconstruct_scalar(double val_minus, double val_cen, double val_plus, int side) {
+            double slope_L = val_cen - val_minus;
+            double slope_R = val_plus - val_cen;
             
-            // Limit the slope
             double slope = minmod(slope_L, slope_R);
             
-            // Reconstruct values at boundaries of the CENTER cell
-            // U_i_right = U_i + 0.5 * slope
-            // But wait! We need the values at the *interface* between i and i+1.
-            // Interface State L = U_i + 0.5 * slope_i
-            // Interface State R = U_{i+1} - 0.5 * slope_{i+1}
-            // This architecture requires access to i-1, i, i+1, i+2.
-            
-            // To simplify: The interface function is asked to provide L and R states for interface i+1/2.
-            // So we need to calculate slope for cell i (to get L) and cell i+1 (to get R).
-            return {0,0}; // Placeholder logic explanation
+            return val_cen + (side * 0.5 * slope);
         }
 
-    public:
-        // Implementation details will go here...
+        std::pair<State, State> reconstruct_interface(
+            const Grid& grid, int i, int j, int k, int axis
+        ) override {
+            State L_out, R_out;
+            
+            // Indices for the stencil:
+            // Interface is between Cell "Left" (idx-1) and Cell "Right" (idx)
+            // To reconstruct Cell "Left" at its right face, we need (idx-2, idx-1, idx)
+            // To reconstruct Cell "Right" at its left face, we need (idx-1, idx, idx+1)
+            
+            State U_LL, U_L, U_R, U_RR;
+
+            if (axis == 0) { // X-Axis
+                U_LL = grid.get_state(i - 2, j, k);
+                U_L  = grid.get_state(i - 1, j, k);
+                U_R  = grid.get_state(i,     j, k);
+                U_RR = grid.get_state(i + 1, j, k);
+            } 
+            else if (axis == 1) { // Y-Axis
+                U_LL = grid.get_state(i, j - 2, k);
+                U_L  = grid.get_state(i, j - 1, k);
+                U_R  = grid.get_state(i, j,     k);
+                U_RR = grid.get_state(i, j + 1, k);
+            }
+            else { // Z-Axis
+                U_LL = grid.get_state(i, j, k - 2);
+                U_L  = grid.get_state(i, j, k - 1);
+                U_R  = grid.get_state(i, j, k);
+                U_RR = grid.get_state(i, j, k + 1);
+            }
+
+            // --- Reconstruct Left State (at Right Face of Cell i-1) ---
+            L_out.rho = reconstruct_scalar(U_LL.rho, U_L.rho, U_R.rho,  1);
+            L_out.u   = reconstruct_scalar(U_LL.u,   U_L.u,   U_R.u,    1);
+            L_out.v   = reconstruct_scalar(U_LL.v,   U_L.v,   U_R.v,    1);
+            L_out.w   = reconstruct_scalar(U_LL.w,   U_L.w,   U_R.w,    1);
+            L_out.p   = reconstruct_scalar(U_LL.p,   U_L.p,   U_R.p,    1);
+
+            // --- Reconstruct Right State (at Left Face of Cell i) ---
+            R_out.rho = reconstruct_scalar(U_L.rho, U_R.rho, U_RR.rho, -1);
+            R_out.u   = reconstruct_scalar(U_L.u,   U_R.u,   U_RR.u,   -1);
+            R_out.v   = reconstruct_scalar(U_L.v,   U_R.v,   U_RR.v,   -1);
+            R_out.w   = reconstruct_scalar(U_L.w,   U_R.w,   U_RR.w,   -1);
+            R_out.p   = reconstruct_scalar(U_L.p,   U_R.p,   U_RR.p,   -1);
+
+            return {L_out, R_out};
+        }
     };
 }
