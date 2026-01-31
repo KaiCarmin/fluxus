@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include "../flux/RiemannSolver.hpp"
-#include "../Grid.hpp"
+#include "flux/RiemannSolver.hpp"
+#include "Grid.hpp"
 
 namespace fluxus {
 
