@@ -7,7 +7,8 @@ from fluxus.core import (
     GodunovIntegrator, 
     State,
     PiecewiseConstantReconstructor,
-    MinmodReconstructor
+    MinmodReconstructor,
+    MUSCLHancockIntegrator
 )
 
 from fluxus.utils import setup_logger
@@ -29,10 +30,10 @@ logger.info(f"Configuration: NX={NX}, NY={NY}, EXTENT_X={EXTENT_X}, EXTENT_Y={EX
 logger.info(f"Physics: GAMMA={GAMMA}, G_Y={G_Y}, STEPS={STEPS}")
 
 # 1. Build Physics Stack
-logger.info("Building physics stack with HLLC solver and Godunov integrator")
+logger.info("Building physics stack with HLLC solver and MUSCL-Hancock integrator")
 solver = HLLCSolver(GAMMA)
 reconstructor = MinmodReconstructor()
-integrator = GodunovIntegrator(solver, reconstructor)
+integrator = MUSCLHancockIntegrator(solver, reconstructor)
 integrator.set_gravity(G_Y)
 logger.debug(f"Gravity set to {G_Y}")
 

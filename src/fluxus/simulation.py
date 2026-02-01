@@ -3,7 +3,7 @@ from fluxus.core import Grid, State, BoundaryType
 from fluxus.utils import setup_logger
 
 # Setup logger
-logger = setup_logger(level="DEBUG")
+logger = setup_logger()
 
 class Simulation:
     def __init__(self, nx, ny, integrator, extent_x=1.0, extent_y=1.0, ng=2, cfl=0.8):

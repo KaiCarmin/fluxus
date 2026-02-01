@@ -10,6 +10,7 @@
 
 #include "integrator/TimeIntegrator.hpp"
 #include "integrator/Godunov.hpp"
+#include "integrator/MUSCLHancock.hpp"
 
 #include "reconstruct/Reconstructor.hpp"
 #include "reconstruct/PiecewiseConstant.hpp"
@@ -143,4 +144,11 @@ PYBIND11_MODULE(_core, m) {
         // compute_dt function
         .def("compute_dt", &GodunovIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"),
          "Calculate stable time step based on CFL condition");
+    
+    // Bind MUSCLHancockIntegrator
+    py::class_<MUSCLHancockIntegrator, TimeIntegrator, std::shared_ptr<MUSCLHancockIntegrator>>(m, "MUSCLHancockIntegrator")
+        .def(py::init<std::shared_ptr<RiemannSolver>, std::shared_ptr<Reconstructor>>())
+        .def("step", &MUSCLHancockIntegrator::step, py::arg("grid"), py::arg("dt"))
+        .def("set_gravity", &MUSCLHancockIntegrator::set_gravity)
+        .def("compute_dt", &MUSCLHancockIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"));
 }
