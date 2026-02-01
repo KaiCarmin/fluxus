@@ -13,6 +13,7 @@ pip-wheel-metadata/
 .Python
 .env
 .venv
+tempCodeRunner.py
 
 # C++
 *.o
