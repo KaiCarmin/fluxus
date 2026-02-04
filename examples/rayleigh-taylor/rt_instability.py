@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from fluxus.simulation import Simulation, BoundaryType
 from fluxus.core import (
     HLLCSolver, 
+    RoeSolver,
     GodunovIntegrator, 
     State,
     PiecewiseConstantReconstructor,
@@ -32,8 +33,8 @@ logger.info(f"Configuration: NX={NX}, NY={NY}, EXTENT_X={EXTENT_X}, EXTENT_Y={EX
 logger.info(f"Physics: GAMMA={GAMMA}, G_Y={G_Y}, STEPS={STEPS}")
 
 # 1. Build Physics Stack
-logger.info("Building physics stack with HLLC solver and MUSCL-Hancock integrator")
-solver = HLLCSolver(GAMMA)
+logger.info("Building physics stack with Roe solver and MUSCL-Hancock integrator")
+solver = RoeSolver(GAMMA)
 reconstructor = VanLeerReconstructor()
 integrator = MUSCLHancockIntegrator(solver, reconstructor)
 integrator.set_gravity(G_Y)
