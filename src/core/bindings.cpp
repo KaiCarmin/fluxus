@@ -15,6 +15,8 @@
 #include "reconstruct/Reconstructor.hpp"
 #include "reconstruct/PiecewiseConstant.hpp"
 #include "reconstruct/Minmod.hpp"
+#include "reconstruct/Superbee.hpp"
+#include "reconstruct/VanLeer.hpp"
 
 namespace py = pybind11;
 using namespace fluxus;
@@ -124,6 +126,14 @@ PYBIND11_MODULE(_core, m) {
 
     // Bind MinmodReconstructor
     py::class_<MinmodReconstructor, Reconstructor, std::shared_ptr<MinmodReconstructor>>(m, "MinmodReconstructor")
+        .def(py::init<>());
+
+    // Bind SuperbeeReconstructor
+    py::class_<SuperbeeReconstructor, Reconstructor, std::shared_ptr<SuperbeeReconstructor>>(m, "SuperbeeReconstructor")
+        .def(py::init<>());
+    
+    // Bind VanLeerReconstructor
+    py::class_<VanLeerReconstructor, Reconstructor, std::shared_ptr<VanLeerReconstructor>>(m, "VanLeerReconstructor")
         .def(py::init<>());
 
     // ------------------------------------------
