@@ -7,6 +7,7 @@
 
 #include "flux/HLLSolver.hpp"
 #include "flux/HLLCSolver.hpp"
+#include "flux/RoeSolver.hpp"
 
 #include "integrator/TimeIntegrator.hpp"
 #include "integrator/Godunov.hpp"
@@ -115,6 +116,12 @@ PYBIND11_MODULE(_core, m) {
         .def(py::init<double>(), py::arg("gamma") = 1.4)
         .def("solve", &HLLCSolver::solve, py::arg("L"), py::arg("R"), 
              "Compute flux using HLLC (restores contact surface)");
+    
+    // Bind the Roe Solver
+    py::class_<RoeSolver, RiemannSolver, std::shared_ptr<RoeSolver>>(m, "RoeSolver")
+        .def(py::init<double>(), py::arg("gamma") = 1.4)
+        .def("solve", &RoeSolver::solve, py::arg("L"), py::arg("R"), 
+             "Compute flux using Roe's approximate Riemann solver");
     
     // ------------------------------------------
     // 6. Bind Reconstructors
