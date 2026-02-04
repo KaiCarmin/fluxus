@@ -8,7 +8,9 @@ from fluxus.core import (
     State,
     PiecewiseConstantReconstructor,
     MinmodReconstructor,
-    MUSCLHancockIntegrator
+    MUSCLHancockIntegrator,
+    SuperbeeReconstructor,
+    VanLeerReconstructor
 )
 
 from fluxus.utils import setup_logger
@@ -32,7 +34,7 @@ logger.info(f"Physics: GAMMA={GAMMA}, G_Y={G_Y}, STEPS={STEPS}")
 # 1. Build Physics Stack
 logger.info("Building physics stack with HLLC solver and MUSCL-Hancock integrator")
 solver = HLLCSolver(GAMMA)
-reconstructor = MinmodReconstructor()
+reconstructor = VanLeerReconstructor()
 integrator = MUSCLHancockIntegrator(solver, reconstructor)
 integrator.set_gravity(G_Y)
 logger.debug(f"Gravity set to {G_Y}")
@@ -43,7 +45,7 @@ sim = Simulation(nx=NX, ny=NY, integrator=integrator,
                  extent_x=EXTENT_X, extent_y=EXTENT_Y, cfl=CFL)
 
 # 3. Boundaries (Reflective Box)
-logger.info("Setting boundaries: Reflective on all sides")
+logger.info("Setting boundaries: Reflective on left/right, Reflective on top/bottom")
 sim.set_boundaries(
     BoundaryType.Reflective, BoundaryType.Reflective,
     BoundaryType.Reflective, BoundaryType.Reflective
