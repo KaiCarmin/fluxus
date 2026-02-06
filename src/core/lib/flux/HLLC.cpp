@@ -1,4 +1,4 @@
-#include "flux/HLLCSolver.hpp"
+#include "flux/HLLC.hpp"
 #include <cmath>
 
 namespace fluxus {

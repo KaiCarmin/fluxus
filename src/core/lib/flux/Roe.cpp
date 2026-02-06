@@ -1,4 +1,4 @@
-#include "flux/RoeSolver.hpp"
+#include "flux/Roe.hpp"
 #include <cmath>
 
 namespace fluxus {

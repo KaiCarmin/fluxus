@@ -1,5 +1,5 @@
 // src/core/lib/flux/HLL.cpp
-#include "flux/HLLSolver.hpp"
+#include "flux/HLL.hpp"
 #include <algorithm>
 
 namespace fluxus {
