@@ -4,17 +4,24 @@
 #include <cmath>
 
 namespace fluxus {
-
-    class VanLeerReconstructor : public Reconstructor {
+    class SuperbeeReconstructor : public Reconstructor {
     public:
         
-        // The van Leer Limiter: A smooth limiter that reduces dissipation.
-        // Returns (2*a*b)/(a+b) if slopes have the same sign, 0 otherwise.
-        inline double vanleer(double a, double b) {
-            if (a * b > 0.0) {
-                return (2.0 * a * b) / (a + b);
+        // The Superbee Limiter: A less dissipative limiter that allows steeper gradients.
+        // Returns max(0, min(2*a, b), min(a, 2*b)) with proper sign handling.
+        inline double superbee(double a, double b) {
+            if (a * b <= 0.0) {
+                return 0.0;
             }
-            return 0.0;
+            
+            double sign = (a > 0.0) ? 1.0 : -1.0;
+            double abs_a = std::abs(a);
+            double abs_b = std::abs(b);
+            
+            double option1 = std::min(2.0 * abs_a, abs_b);
+            double option2 = std::min(abs_a, 2.0 * abs_b);
+            
+            return sign * std::max(option1, option2);
         }
 
         // Helper to reconstruct a single scalar variable
@@ -26,7 +33,7 @@ namespace fluxus {
             double slope_L = val_cen - val_minus;
             double slope_R = val_plus - val_cen;
             
-            double slope = vanleer(slope_L, slope_R);
+            double slope = superbee(slope_L, slope_R);
             
             return val_cen + (side * 0.5 * slope);
         }

@@ -5,9 +5,9 @@
 #include "types.hpp"
 #include "Grid.hpp"
 
-#include "flux/HLLSolver.hpp"
-#include "flux/HLLCSolver.hpp"
-#include "flux/RoeSolver.hpp"
+#include "flux/HLL.hpp"
+#include "flux/HLLC.hpp"
+#include "flux/Roe.hpp"
 
 #include "source-term/SourceTerm.hpp"
 #include "source-term/Gravity.hpp"
