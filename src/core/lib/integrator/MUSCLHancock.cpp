@@ -6,7 +6,7 @@
 
 namespace fluxus {
 
-    // --- ADAPTIVE TIME STEPPING (Copied from Godunov) ---
+    // --- ADAPTIVE TIME STEPPING ---
     double MUSCLHancockIntegrator::compute_dt(const Grid& grid, double cfl) {
         double max_sx = 1e-9;
         double max_sy = 1e-9;
@@ -34,15 +34,7 @@ namespace fluxus {
         if (grid.ndim >= 2) dt_hydro = std::min(dt_hydro, grid.dy / max_sy);
         if (grid.ndim == 3) dt_hydro = std::min(dt_hydro, grid.dz / max_sz);
 
-        double dt_grav = 1e30;
-        if (std::abs(m_gravity_y) > 1e-12) {
-            double min_d = grid.dx;
-            if (grid.ndim >= 2) min_d = std::min(min_d, grid.dy);
-            if (grid.ndim == 3) min_d = std::min(min_d, grid.dz);
-            dt_grav = std::sqrt(2.0 * min_d / std::abs(m_gravity_y));
-        }
-
-        return cfl * std::min(dt_hydro, dt_grav);
+        return cfl * dt_hydro;
     }
 
     void MUSCLHancockIntegrator::step(Grid& grid, double dt) {
@@ -52,10 +44,9 @@ namespace fluxus {
         if (grid.ndim >= 2) sweep_y(grid, dt);
         if (grid.ndim == 3) sweep_z(grid, dt);
 
-        // 2. Source Terms (Gravity)
-        if (std::abs(m_gravity_y) > 1e-12) {
-            apply_sources(grid, dt);
-        }
+        // 2. Apply Generic Sources (Gravity, etc.)
+        // This iterates over m_sources and calls apply() on each
+        apply_all_sources(grid, dt);
     }
 
     // --- X SWEEP ---
@@ -271,28 +262,6 @@ namespace fluxus {
 
                     if (k > 0)  grid.apply_flux(i, j, k - 1, F_final, dt_dz);
                     if (k < nz) grid.apply_flux(i, j, k,     F_final, -dt_dz);
-                }
-            }
-        }
-    }
-
-    // --- SOURCE TERMS ---
-    void MUSCLHancockIntegrator::apply_sources(Grid& grid, double dt) {
-        #pragma omp parallel for collapse(3) 
-        for (int k = 0; k < grid.nz; ++k) {
-            for (int j = 0; j < grid.ny; ++j) {
-                for (int i = 0; i < grid.nx; ++i) {
-                    State s = grid.get_state(i, j, k);
-                    
-                    double d_mom_y = s.rho * m_gravity_y * dt;
-                    double d_energy = (s.rho * s.v) * m_gravity_y * dt;
-                    
-                    Flux source;
-                    source.rho = 0.0; source.mom_x = 0.0; source.mom_z = 0.0;
-                    source.mom_y = d_mom_y; 
-                    source.E     = d_energy;
-                    
-                    grid.apply_flux(i, j, k, source, -1.0);
                 }
             }
         }
