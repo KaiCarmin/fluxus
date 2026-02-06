@@ -9,6 +9,9 @@
 #include "flux/HLLCSolver.hpp"
 #include "flux/RoeSolver.hpp"
 
+#include "source-term/SourceTerm.hpp"
+#include "source-term/Gravity.hpp"
+
 #include "integrator/TimeIntegrator.hpp"
 #include "integrator/Godunov.hpp"
 #include "integrator/MUSCLHancock.hpp"
@@ -144,7 +147,16 @@ PYBIND11_MODULE(_core, m) {
         .def(py::init<>());
 
     // ------------------------------------------
-    // 7. Bind Integrators
+    // 7. Bind Source Terms
+    py::class_<SourceTerm, std::shared_ptr<SourceTerm>>(m, "SourceTerm");
+
+    // Bind Gravity Source Term
+    py::class_<Gravity, SourceTerm, std::shared_ptr<Gravity>>(m, "Gravity")
+        .def(py::init<double, double, double>(), 
+             py::arg("gx")=0.0, py::arg("gy")=0.0, py::arg("gz")=0.0);
+
+    // ------------------------------------------
+    // 8. Bind Integrators
     py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
 
     // Bind GodunovIntegrator
@@ -155,9 +167,6 @@ PYBIND11_MODULE(_core, m) {
         // Step function
         .def("step", &GodunovIntegrator::step, py::arg("grid"), py::arg("dt"), 
              "Advance the grid by one time step")
-        // Expose set_gravity
-        .def("set_gravity", &GodunovIntegrator::set_gravity, py::arg("g_y"), 
-             "Set gravity acceleration in Y direction (e.g. -9.81)")
         // compute_dt function
         .def("compute_dt", &GodunovIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"),
          "Calculate stable time step based on CFL condition");
@@ -166,6 +175,5 @@ PYBIND11_MODULE(_core, m) {
     py::class_<MUSCLHancockIntegrator, TimeIntegrator, std::shared_ptr<MUSCLHancockIntegrator>>(m, "MUSCLHancockIntegrator")
         .def(py::init<std::shared_ptr<RiemannSolver>, std::shared_ptr<Reconstructor>>())
         .def("step", &MUSCLHancockIntegrator::step, py::arg("grid"), py::arg("dt"))
-        .def("set_gravity", &MUSCLHancockIntegrator::set_gravity)
         .def("compute_dt", &MUSCLHancockIntegrator::compute_dt, py::arg("grid"), py::arg("cfl"));
 }
