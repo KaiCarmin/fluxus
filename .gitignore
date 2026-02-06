@@ -14,6 +14,7 @@ pip-wheel-metadata/
 .env
 .venv
 tempCodeRunner.py
+tempCodeRunnerFile.py
 build_log.txt
 
 # C++
