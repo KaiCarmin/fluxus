@@ -11,7 +11,8 @@ from fluxus.core import (
     MinmodReconstructor,
     MUSCLHancockIntegrator,
     SuperbeeReconstructor,
-    VanLeerReconstructor
+    VanLeerReconstructor,
+    Gravity
 )
 
 from fluxus.utils import setup_logger
@@ -37,8 +38,11 @@ logger.info("Building physics stack with Roe solver and MUSCL-Hancock integrator
 solver = RoeSolver(GAMMA)
 reconstructor = VanLeerReconstructor()
 integrator = MUSCLHancockIntegrator(solver, reconstructor)
-integrator.set_gravity(G_Y)
-logger.debug(f"Gravity set to {G_Y}")
+
+# 1.5. Add Gravity (The New Modular Way)
+gravity = Gravity(gx=0.0, gy=G_Y, gz=0.0)
+integrator.add_source(gravity)
+logger.info(f"added Gravity source term with g_y={G_Y}")
 
 # 2. Initialize Simulation
 logger.info(f"Initializing simulation: nx={NX}, ny={NY}, cfl={CFL}")
