@@ -91,7 +91,11 @@ pip install -e .
 
 ## 📖 Examples
 
-**Sod Shock Tube** (`examples/sod-shock-tube/`): 1D Riemann problem showing shock, rarefaction, and contact discontinuity
+### Sod Shock Tube (`examples/sod-shock-tube/`)
+
+Classic 1D Riemann problem demonstrating shock, rarefaction, and contact discontinuity. The comparison example shows the accuracy difference between 1st-order (Godunov + Piecewise Constant) and 2nd-order (MUSCL-Hancock + Superbee) schemes. The 2nd-order method captures sharper discontinuities with less numerical diffusion.
+
+![Sod Shock Tube Comparison](examples/sod-shock-tube/sod_comparison.png)
 
 **Rayleigh-Taylor Instability** (`examples/rayleigh-taylor/`): 2D hydrodynamic instability with gravity
 
