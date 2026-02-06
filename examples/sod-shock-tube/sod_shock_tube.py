@@ -9,12 +9,11 @@ logger = setup_logger(level="INFO")
 
 # --- CONFIGURATION ---
 NX = 200
-DT = 0.002
 T_MAX = 0.2
 GAMMA = 1.4
 CFL = 0.5
 
-logger.info(f"Configuration: NX={NX}, DT={DT}, T_MAX={T_MAX}, GAMMA={GAMMA}, CFL={CFL}")
+logger.info(f"Configuration: NX={NX}, T_MAX={T_MAX}, GAMMA={GAMMA}, CFL={CFL}")
 
 # 1. Build the Physics Stack (Dependency Injection)
 #    We explicitly choose the HLLC Riemann Solver and Godunov Integrator.
@@ -47,21 +46,14 @@ sim.set_boundaries(
 
 # 5. Run Loop
 logger.info("Starting Sod Shock Tube Simulation...")
-t = 0.0
-step = 0
 
-# Track history to ensure we hit T_MAX exactly
-while t < T_MAX:
-    # Use adaptive stepping if you prefer: dt_used = sim.step()
-    # But for valid comparison to textbooks, we often force a fixed dt here.
-    sim.step(DT)
-    t += DT
-    step += 1
+while sim.sim_time < T_MAX:
+    sim.step()  # Adaptive dt computed automatically
     
-    if step % 20 == 0:
-        logger.info(f"Step {step}: t={t:.3f}")
+    if sim.step_count % 20 == 0:
+        logger.info(f"Step {sim.step_count}: t={sim.sim_time:.3f}")
 
-logger.info(f"Simulation completed: {step} steps, final time t={t:.3f}")
+logger.info(f"Simulation completed: {sim.step_count} steps, final time t={sim.sim_time:.6f}")
 
 # 6. Visualization
 logger.info("Generating visualization...")
@@ -102,6 +94,6 @@ axes[2].plot(x_axis, p, 'r-', label='Pressure')
 axes[2].set_title("Pressure")
 axes[2].grid(True)
 
-plt.suptitle(f"Sod Shock Tube (t={t:.2f})")
+plt.suptitle(f"Sod Shock Tube (t={sim.sim_time:.2f})")
 plt.tight_layout()
 plt.show()
