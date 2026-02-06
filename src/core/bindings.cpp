@@ -157,8 +157,10 @@ PYBIND11_MODULE(_core, m) {
 
     // ------------------------------------------
     // 8. Bind Integrators
-    py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator");
-
+    // Base class exposes add_source
+    py::class_<TimeIntegrator, std::shared_ptr<TimeIntegrator>>(m, "TimeIntegrator")
+        .def("add_source", &TimeIntegrator::add_source, py::arg("source"));
+        
     // Bind GodunovIntegrator
     py::class_<GodunovIntegrator, TimeIntegrator, std::shared_ptr<GodunovIntegrator>>(m, "GodunovIntegrator")
         // Constructor
