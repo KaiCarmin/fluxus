@@ -4,7 +4,6 @@
 #include <cmath>
 
 namespace fluxus {
-
     class SuperbeeReconstructor : public Reconstructor {
     public:
         

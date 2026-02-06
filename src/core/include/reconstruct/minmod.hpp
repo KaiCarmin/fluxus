@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 namespace fluxus {
-
     class MinmodReconstructor : public Reconstructor {
     public:
         
